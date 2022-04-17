@@ -38,7 +38,9 @@ void sendMessage()
         sprintf(topic, "data/%s/json", config.name);
         mqtt.publish(topic, (char*)msg, true);
         Serial.printf("publishing: %s:%s\n",topic, msg);
-
+    } else {
+        Serial.println("MQTT disconnected. restarting ...");
+        ESP.restart();
     }
 }
 

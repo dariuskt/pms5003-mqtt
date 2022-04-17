@@ -1,10 +1,12 @@
 #include <Arduino.h>
+#include "Ticker.h"
 #include "mqtt.h"
 #include <SoftwareSerial.h>
 
-SoftwareSerial ss(D4,D4);
+Ticker wd;
+int wd_counter = 0;
 
-byte incomingByte = 0;
+SoftwareSerial ss(D4,D4);
 
 void initWifi() {
     //Serial.setDebugOutput(true);
@@ -16,29 +18,37 @@ void initWifi() {
     #endif
 }
 
-void initSensor() {
-    //Serial.printf("Setting up sensor serial with %d baud\n", config.sensor_baud);
-    ss.begin(config.sensor_baud);
-}
-
 int readSensor() {
-    ss.flush();
-    delay(200);
+    ss.begin(config.sensor_baud);
+    delay(990);
 
     int i = 0;
+    int crc = 0;
     char data[128];
     while (ss.available()) {
         data[i] = ss.read();
         //Serial.printf("byte[%2d]: %X\n", i, data[i]);
-        i++;
-        if (i>65)
-            return -1;
-    }
-    if (data[0] != 0x42 || data[1] != 0x4D)
-        return -2;
 
-    if (data[6] > 20)
-        return -3;
+        if (i<30)
+            crc += data[i];
+
+        if (i>31)
+            continue;
+
+        i++;
+    }
+
+    if (i != 32)
+        return -20;
+
+    if (data[0] != 0x42 || data[1] != 0x4D)
+        return -30;
+
+    if (data[30] != (crc>>8) || data[31] != (crc&0xFF))
+        return -40;
+
+    if (data[6] > 40)
+        return -50;
 
     state.pieces = data[6];
     state.pieces = state.pieces << 8;
@@ -46,11 +56,20 @@ int readSensor() {
     return state.pieces;
 }
 
+void wd_tick() {
+    wd_counter++;
+    if (wd_counter > EXECUTION_TIMEOUT) {
+        Serial.println("Rebooting...");
+        ESP.restart();
+    }
+}
 // ===============================================
 
 void setup() {
     Serial.begin(76800);
     Serial.println("\nBooting... ");
+
+    wd.attach(1, wd_tick);
 
     initWifi();
 
@@ -76,11 +95,14 @@ void setup() {
 void loop() {
 
     loopMqtt();
-    delay(100);
-    initSensor();
-    if (readSensor() > 0) {
+    int i = readSensor();
+    if (i > 0) {
         sendMessage();
+        wd_counter = 0;
         delay(config.read_delay);
+    } else {
+        Serial.printf("ReadError %d (timeout:%d)\n"
+        , i, wd_counter);
     }
 
 }
