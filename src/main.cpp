@@ -1,12 +1,16 @@
 #include <Arduino.h>
 #include "Ticker.h"
 #include "mqtt.h"
-#include <SoftwareSerial.h>
+#include <PMserial.h>
+
+#define PMS_RX D4
+#define PMS_TX D4
+
+SerialPM pms(PMS5003, PMS_RX, PMS_TX);
 
 Ticker wd;
 int wd_counter = 0;
 
-SoftwareSerial ss(D4,D4);
 
 void initWifi() {
     //Serial.setDebugOutput(true);
@@ -19,41 +23,14 @@ void initWifi() {
 }
 
 int readSensor() {
-    ss.begin(config.sensor_baud);
-    delay(990);
+    pms.read();
 
-    int i = 0;
-    int crc = 0;
-    char data[128];
-    while (ss.available()) {
-        data[i] = ss.read();
-        //Serial.printf("byte[%2d]: %X\n", i, data[i]);
-
-        if (i<30)
-            crc += data[i];
-
-        if (i>31)
-            continue;
-
-        i++;
+    if (pms) {
+        state.pieces = pms.pm25;
+        return state.pieces;
+    } else {
+        return -1;
     }
-
-    if (i != 32)
-        return -20;
-
-    if (data[0] != 0x42 || data[1] != 0x4D)
-        return -30;
-
-    if (data[30] != (crc>>8) || data[31] != (crc&0xFF))
-        return -40;
-
-    if (data[6] > 40)
-        return -50;
-
-    state.pieces = data[6];
-    state.pieces = state.pieces << 8;
-    state.pieces += data[7];
-    return state.pieces;
 }
 
 void wd_tick() {
@@ -72,6 +49,8 @@ void setup() {
     wd.attach(1, wd_tick);
 
     initWifi();
+
+    pms.init();
 
     Serial.print("Wifi connecting: ");
     while ( WiFi.status() != WL_CONNECTED ) {
