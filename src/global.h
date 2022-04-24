@@ -11,7 +11,6 @@
 #define EXECUTION_TIMEOUT 20
 
 struct globalConfig {
-    int sensor_baud = 9600;
     int read_delay = 10000;
     char name[16] = "noname";
 };

@@ -53,13 +53,11 @@ void configCallback(char* topic, byte* payload, unsigned int length) {
         return;
     }
     strlcpy(config.name, doc["name"] | "unknown", sizeof(config.name));
-    config.sensor_baud = doc["sensor_baud"];
     config.read_delay = doc["read_delay"];
     state.configured = 1;
 
     Serial.print("\n\nConfiguration aquired:\n");
     Serial.printf("config.name='%s'\n", config.name);
-    Serial.printf("config.sensor_baud='%d'\n", config.sensor_baud);
     Serial.printf("config.read_delay='%d'\n", config.read_delay);
 }
 
