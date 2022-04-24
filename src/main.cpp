@@ -24,13 +24,20 @@ void initWifi() {
 
 int readSensor() {
     pms.read();
-
     if (pms) {
-        state.pieces = pms.pm25;
-        return state.pieces;
-    } else {
-        return -1;
+        state.ugm3_pm_01_0 = pms.pm01;
+        state.ugm3_pm_02_5 = pms.pm25;
+        state.ugm3_pm_10_0 = pms.pm10;
+        if (pms.has_number_concentration()) {
+            state.count_pm_00_3 = pms.n0p3;
+            state.count_pm_00_5 = pms.n0p5;
+            state.count_pm_01_0 = pms.n1p0;
+            state.count_pm_02_5 = pms.n2p5;
+            state.count_pm_05_0 = pms.n5p0;
+            state.count_pm_10_0 = pms.n10p0;
+        }
     }
+    return pms.status;
 }
 
 void wd_tick() {
@@ -75,7 +82,7 @@ void loop() {
 
     loopMqtt();
     int i = readSensor();
-    if (i > 0) {
+    if (i == pms.OK) {
         sendMessage();
         wd_counter = 0;
         delay(config.read_delay);

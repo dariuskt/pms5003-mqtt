@@ -26,12 +26,20 @@ void destroyMqtt() {
 void sendMessage()
 {
     if (mqtt.connected()) {
-        char msg[128];
+        char msg[256];
         char topic[64];
         sprintf(msg
-            , "{\"host\":\"%s\",\"pieces\":%d,\"configured\":%d}"
+            , "{\"host\":\"%s\",\"ugm3_pm_01_0\":%d,\"ugm3_pm_02_5\":%d,\"ugm3_pm_10_0\":%d,\"count_pm_00_3\":%d,\"count_pm_00_5\":%d,\"count_pm_01_0\":%d,\"count_pm_02_5\":%d,\"count_pm_05_0\":%d,\"count_pm_10_0\":%d,\"configured\":%d}"
             , config.name
-            , state.pieces
+            , state.ugm3_pm_01_0
+            , state.ugm3_pm_02_5
+            , state.ugm3_pm_10_0
+            , state.count_pm_00_3
+            , state.count_pm_00_5
+            , state.count_pm_01_0
+            , state.count_pm_02_5
+            , state.count_pm_05_0
+            , state.count_pm_10_0
             , state.configured
         );
 

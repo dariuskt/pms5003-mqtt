@@ -16,7 +16,17 @@ struct globalConfig {
 };
 
 struct globalState {
-    int pieces = 0;
+    int ugm3_pm_01_0 = 0;
+    int ugm3_pm_02_5 = 0;
+    int ugm3_pm_10_0 = 0;
+
+    int count_pm_00_3 = 0;
+    int count_pm_00_5 = 0;
+    int count_pm_01_0 = 0;
+    int count_pm_02_5 = 0;
+    int count_pm_05_0 = 0;
+    int count_pm_10_0 = 0;
+
     int configured = 0;
 };
 
