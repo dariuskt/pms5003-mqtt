@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "Ticker.h"
 #include "mqtt.h"
+#include "display.h"
 #include <PMserial.h>
 
 #define PMS_RX D4
@@ -40,6 +41,24 @@ int readSensor() {
     return pms.status;
 }
 
+void updateWifiStatus()
+{
+    switch (WiFi.status()) {
+        case WL_IDLE_STATUS:
+            state.wifi = 1;
+            break;
+        case WL_CONNECTED:
+            state.wifi = 2;
+            break;
+        case WL_CONNECT_FAILED:
+            state.wifi = 4;
+            break;
+        default:
+            state.wifi = 0;
+    }
+}
+
+
 void wd_tick() {
     wd_counter++;
     if (wd_counter > EXECUTION_TIMEOUT) {
@@ -55,18 +74,26 @@ void setup() {
 
     wd.attach(1, wd_tick);
 
+    initDisplay();
+    screenRepaint();
+
     initWifi();
 
     pms.init();
 
     Serial.print("Wifi connecting: ");
+    state.wifi = 1;
+    screenRepaint();
     while ( WiFi.status() != WL_CONNECTED ) {
         delay(10);
         Serial.print(".");
     }
+    updateWifiStatus();
     Serial.println();
 
     Serial.println("Connecting to MQTT broker");
+    state.mqtt = 1;
+    screenRepaint();
     setupMqtt();
 
     Serial.print("Waiting for configuration: ");
@@ -79,10 +106,12 @@ void setup() {
  }
 
 void loop() {
-
+    updateWifiStatus();
+    screenRepaint();
     loopMqtt();
+    screenRepaint();
     int i = readSensor();
-    if (i == pms.OK) {
+    if (i == pms.OK && state.wifi == 2 && state.mqtt == 2) {
         sendMessage();
         wd_counter = 0;
         delay(config.read_delay);
@@ -90,5 +119,4 @@ void loop() {
         Serial.printf("ReadError %d (timeout:%d)\n"
         , i, wd_counter);
     }
-
 }

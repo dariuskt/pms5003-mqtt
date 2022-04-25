@@ -28,6 +28,8 @@ struct globalState {
     int count_pm_10_0 = 0;
 
     int configured = 0;
+    int wifi = 0;
+    int mqtt = 0;
 };
 
 extern globalState state;

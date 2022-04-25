@@ -16,7 +16,12 @@ void setupMqtt()
 }
 
 void loopMqtt() {
-    mqtt.loop();
+    if (mqtt.connected()) {
+        state.mqtt = 2;
+        mqtt.loop();
+    } else {
+        state.mqtt = 0;
+    }
 }
 
 void destroyMqtt() {
@@ -46,9 +51,6 @@ void sendMessage()
         sprintf(topic, "data/%s/json", config.name);
         mqtt.publish(topic, (char*)msg, true);
         Serial.printf("publishing: %s:%s\n",topic, msg);
-    } else {
-        Serial.println("MQTT disconnected. restarting ...");
-        ESP.restart();
     }
 }
 
